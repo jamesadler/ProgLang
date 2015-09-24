@@ -122,3 +122,17 @@ in
    {RunAll Exps}
 end
 
+
+declare
+fun {EtaR Exp}
+
+case Exp of lambda ( X (E X) ) then
+  if (X IS FREE IN E)
+  	E
+  end
+end
+
+
+
+end
+
