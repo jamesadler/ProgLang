@@ -1,16 +1,16 @@
 declare
 fun {Eval Exp}
-	% Application Evalulation
+	% Application Evaluation
 	case Exp of [L, M] then
 		case L of lambda (X E) then	 	% Beta Reduction Check
-			BetaRed [ Eval L, Eval M ]
+			BetaRed [ Eval L, Eval M ]  % PROBLEM: WILL BETA REDUCE EVEN IF L GETS ETA-CONVERTED OUT
 		else Eval [ Eval L, Eval M ]
 		end
 	end
 
 	% Anonymous Function Evaluation
 	case Exp of lambda (X E) then
-		case E of [R, X] then					 % Eta Conversion Check
+		case E of [R, X] then					 % Eta Conversion Check (automatically handled)
 				Eval R
 		else
 				Eval E
@@ -30,29 +30,40 @@ fun {BetaRed Exp}
 
 		%HANDLE L
 		case L of lambda (X E) then
-			case E of [S1, S2] then
-			BetaRed E
-			Sub E X M
-
-			else case E of [x] then
-				EtaConv Exp
-
-			end
-
-
-		else case L of [S1, S2] then
-			BetaRed L
+			BetaHelper E X M
 		end
-
-		%HANDLE M
+		else L | M
 	end
 
+	% Corner Case
 	else case Exp of [] then [] end
 end
 
-declare
-fun {EtaConv Exp}
 
+% Subs in applied var M
+declare
+fun {BetaHelper Exp B M}
+
+	% Single var
+	case Exp of [X] then
+		case [X] of B then
+			[M]
+		end
+	end
+
+	% Create new anonymous function
+	case Exp of lambda (X E) then
+		lambda (X BetaHelper E B M)
+	end
+
+	% Standard application
+	case Exp of [H, T] then
+		case H of B then
+			M | BetaHelper Exp B M
+		else
+			H | BetaHelper Exp B M
+		end
+	end
 end
 
 
