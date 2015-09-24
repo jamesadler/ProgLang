@@ -1,4 +1,4 @@
-% James Adler
+% James Adler AND SPEN-THUR!!!!
 % Programming Languages - Assigment 1
 % Professor Varela
 
