@@ -12,8 +12,8 @@ fun {Eval Exp}
 	case Exp of lambda (X E) then
 		case E of [R, X] then					 % Eta Conversion Check (automatically handled)
 				Eval R
-		else
-				Eval E
+		else if (IT DOESN'T LOOP ON ITSELF) % FIX FIX FIX
+				Eval lambda (X Eval E)
 		end
 	end
 
@@ -22,21 +22,16 @@ fun {Eval Exp}
 end
 
 
-
+% BETA REDUCTION FUNCTIONS
 
 declare
 fun {BetaRed Exp}
 	case Exp of [L M] then
-
-		%HANDLE L
 		case L of lambda (X E) then
 			BetaHelper E X M
 		end
 		else L | M
 	end
-
-	% Corner Case
-	else case Exp of [] then [] end
 end
 
 
@@ -56,7 +51,7 @@ fun {BetaHelper Exp B M}
 		lambda (X BetaHelper E B M)
 	end
 
-	% Standard application
+	% Standard application; check for match
 	case Exp of [H, T] then
 		case H of B then
 			M | BetaHelper Exp B M
