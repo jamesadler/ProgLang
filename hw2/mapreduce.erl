@@ -21,4 +21,4 @@ start (Fin, Fout, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 %% Generate host file from Node names
 make_host_file(Nodes) ->
   file:open( ".hosts.erlang", [read, write]),
-  lists:foreach( fun(X) -> file:write(".hosts.erlang", "\'~p\'~n.", [X]) end, Nodes ).
+  lists:foreach( fun(X) -> file:write("spoonfile.txt", string:join(["\'", X, "\'.~n" ], "") ) end, Nodes ).
