@@ -7,11 +7,15 @@
 % $ erl -noshell name workplace1@127.0.0.1 -setcookie mapreduce
 
 start (Fin, Fout, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
-  io:format("Cool beans!~n"),
-  make_host_file (Nodes),
-  pool:start('P')
-  %map_phase(mapf, fin, nodes)
-  .
+	io:format("Cool beans!\n"),
+	{Result, File} = file:open(Fin,[read]),
+	for_each_line(File, Mapf,Num_m)
+
+  	% 
+  	% make_host_file (Nodes),
+  	% pool:start('P')
+  	%map_phase(mapf, fin, nodes)
+.
 
 
 %map_phase(Mapf, Fin, Nodes) ->
@@ -23,8 +27,18 @@ start (Fin, Fout, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 
 %.
 
+for_each_line(File, Mapf, Num_m) ->
+	case io:get_line(File, "") of
+        eof  -> file:close(File), Num_m;
+        Line -> io:format("~s",[Line]),
+        	for_each_line(File, Mapf, Num_m)
+        % Line -> NewAccum = Mapf(Line, Num_m),
+                	
+    end.
+
+
 
 %% Generate host file from Node names
 make_host_file(Nodes) ->
-  {Result, File} = file:open( ".hosts.erlang", [write] ),
-  lists:foreach( fun(X) -> file:write(File, string:join(["\'", X, "\'.\n" ], "") ) end, Nodes ).
+  	{Result, File} = file:open( ".hosts.erlang", [write] ),
+  	lists:foreach( fun(X) -> file:write(File, string:join(["\'", X, "\'.\n" ], "") ) end, Nodes ).
