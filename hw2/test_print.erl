@@ -3,5 +3,6 @@
 
 spoon_print() ->
   receive
-    io:format("Cool beans!~n")
+    _ ->
+      io:format("Cool beans!~n")
   end.

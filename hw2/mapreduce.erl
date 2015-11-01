@@ -1,5 +1,5 @@
 -module(mapreduce).
--export([start/9,map_phase/2,reduce_phase/2,shuffle_phase/2]).
+-export([start/9,map_phase/2,reduce_phase/2]).
 
 % start("input_file.txt","output_file.txt",fun dna_char_count:map/1,
 % 		fun dna_char_count:reduce/1,4,2,2,
@@ -20,8 +20,39 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 
 	%Read in input file line by line, spawn mapper for each
 	{ok, Device} = file:open(Fin,[read]),
-	spawn_mappers(Device, Nodes, 1, FMod, Mapf),
-	
+	spawn_mappers(Device, Nodes, 1, FMod, Mapf, 0),
+
+	%SHUFFLE PHASE
+	io:format("func: Shuffle\n"),
+
+	Tmp = [],
+	lists:foreach(
+		fun(X) ->
+			Key = element(1,X),
+			Value = element(2,X),
+
+			mapper:merge(Key, Value,MappedData)
+
+		end,
+		Data
+	),
+
+	lists:foreach(
+		fun(X) ->
+			Key = element(1,X),
+			Value = element(2,X),
+
+			io:format("~c ~w\n",[Key, Value])
+		end,
+		MappedData
+	),
+
+
+	io:format("func: end Shuffle\n"),
+
+
+
+
 	% Lines = [],
 	%Lines = read_line(Device, []),
 	%io:format("~w",[Lines]),
@@ -89,38 +120,9 @@ map_phase(Device, Redf) ->
 	io:format("fund: end map phase \n")
 .
 
-shuffle_phase(Data, MappedData) ->
-	io:format("func: Shuffle\n"),
-
-	Tmp = [],
-	lists:foreach(
-		fun(X) ->
-			Key = element(1,X),
-			Value = element(2,X),
-
-			mapper:merge(Key, Value,MappedData)
-
-		end,
-		Data
-	),
-
-	lists:foreach(
-		fun(X) ->
-			Key = element(1,X),
-			Value = element(2,X),
-
-			io:format("~c ~w\n",[Key, Value])
-		end,
-		MappedData
-	),
-
-
-	io:format("func: end Shuffle\n")
-.
-
 
 % Generate mappers from input file, distributing among nodes
-spawn_mappers(Device, Nodes, Index, FMod, Mapf) ->
+spawn_mappers(Device, Nodes, Index, FMod, Mapf, Times_called) ->
 
 %{ok, Device} = file:open(".hosts.erlang", [write]),
 % Formats the host name to net_adm standards
@@ -138,9 +140,29 @@ spawn_mappers(Device, Nodes, Index, FMod, Mapf) ->
 
 		%Cycle through Nodes to distribute workload
 		case length(Nodes) =:= Index of
-			true -> spawn_mappers(Device, Nodes, 1, FMod, Mapf);
-		 	false -> spawn_mappers(Device, Nodes, Index + 1, FMod, Mapf)
+			true -> spawn_mappers(Device, Nodes, 1, FMod, Mapf, Times_called + 1);
+		 	false -> spawn_mappers(Device, Nodes, Index + 1, FMod, Mapf, Times_called + 1)
 		end
 
 	end,
-	'done'.
+
+	Aggregator = spawn(aggregate_results),
+
+	receive
+		{ok, {Key, Val} } ->
+			Aggregator ! {Key, Val},
+			flush()
+		after 0 -> ok
+	end,
+
+	'done'
+.
+
+
+aggregate_results(L) ->
+	receive
+		{ From, {Key, Val} } -> aggregate_results( [ {Key, Val} | L ] );
+		_ -> exit("fucked up")
+		after 0 -> From ! {ok, L}
+	end
+.
