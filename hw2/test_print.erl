@@ -2,5 +2,6 @@
 -export([spoon_print/0]) .
 
 spoon_print() ->
-  io:format("Cool beans!~n")
-.
+  receive
+    io:format("Cool beans!~n")
+  end.

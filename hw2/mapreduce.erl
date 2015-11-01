@@ -1,5 +1,5 @@
 -module(mapreduce).
--export([start/8,map_phase/2,reduce_phase/2,shuffle_phase/2]).
+-export([start/9,map_phase/2,reduce_phase/2,shuffle_phase/2]).
 
 % start("input_file.txt","output_file.txt",fun dna_char_count:map/1,
 % 		fun dna_char_count:reduce/1,4,2,2,
@@ -20,11 +20,11 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 
 	%Read in input file line by line, spawn mapper for each
 	{ok, Device} = file:open(Fin,[read]),
-	make_host_file(Device, Nodes, 0, FMod, Mapf),
-
+	spawn_mappers(Device, Nodes, 1, FMod, Mapf),
+	
 	% Lines = [],
-	Lines = read_line(Device, []),
-	io:format("~w",[Lines]),
+	%Lines = read_line(Device, []),
+	%io:format("~w",[Lines]),
 
 
 	% Mapping Phase
@@ -127,19 +127,20 @@ spawn_mappers(Device, Nodes, Index, FMod, Mapf) ->
 %file:write(Device, io_lib:format("\'~s\'.\n", [X])),
 
 
-case io:get_line(Device, "") of
+	case io:get_line(Device, "") of
 	eof -> file:close(Device), io:format("End of File\n");
 	Line ->
 		Tmp = string:tokens(Line, "\t"),
 		Key = lists:nth(1,Tmp),
 		Value = string:strip(lists:nth(2,Tmp), right, $\n),
-		Pid = spawn(X, FMod, Mapf, []),
+		Pid = spawn( lists:nth(Index, Nodes), FMod, Mapf, [] ),
 		Pid ! { self(), {Key, Value} },
 
 		%Cycle through Nodes to distribute workload
-		if(Length(Nodes) =:= Index)
-			spawn_mappers(Device, Nodes, 0, FMod, Mapf),
-		else
-			spawn_mappers(Device, Nodes, Index + 1, FMod, Mapf)
+		case length(Nodes) =:= Index of
+			true -> spawn_mappers(Device, Nodes, 1, FMod, Mapf);
+		 	false -> spawn_mappers(Device, Nodes, Index + 1, FMod, Mapf)
+		end
 
-end.
+	end,
+	'done'.
