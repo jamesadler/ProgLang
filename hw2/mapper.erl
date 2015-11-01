@@ -16,14 +16,16 @@ call_mapreduce(Msg) ->
 
 % Maps the given data
 % map({Key,Value}) -> 
-map(Data) -> 
-	lists:map(
-  		fun(X) -> 
-  			{X,1}
-  		end,
-  		Data
-  	)
-.
+% % map(Data) -> 
+% 	lists:map(
+%   		fun(X) -> 
+%   			{X,1}
+%   		end,
+%   		Value
+%   	)
+% .
+
+map({_,Value}) -> lists:map(fun(X) -> {X,1} end, Value).
 
 % Reduces the given data
 reduce({Key,Values}) -> 
@@ -34,4 +36,8 @@ reduce({Key,Values}) ->
 merge(Key, Value, List) ->
 	io:format("merge")
 	%
+.
+
+fuck() ->
+	io:format("fuck\n")
 .
