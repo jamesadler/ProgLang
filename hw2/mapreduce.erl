@@ -20,7 +20,7 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 
 	%Read in input file line by line, spawn mapper for each
 	{ok, Device} = file:open(Fin,[read]),
-	MappedData = spawn_mappers(Device, Nodes, 1, FMod, Mapf, 0),
+	MappedData = mapping_phase(Device, Nodes, FMod, Mapf),
 
 	%SHUFFLE PHASE
 	io:format("func: Shuffle\n"),
@@ -37,15 +37,15 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 		MappedData
 	),
 
-	lists:foreach(
-		fun(X) ->
-			Key = element(1,X),
-			Value = element(2,X),
-
-			io:format("~c ~w\n",[Key, Value])
-		end,
-		MappedData
-	),
+%	lists:foreach(
+%		fun(X) ->
+%			Key = element(1,X),
+%			Value = element(2,X),
+%
+%			io:format("~c ~w\n",[Key, Value])
+%		end,
+%		MappedData
+%	),
 
 
 	io:format("func: end Shuffle\n"),
@@ -122,32 +122,15 @@ map_phase(Device, Redf) ->
 
 
 % Generate mappers from input file, distributing among nodes
-spawn_mappers(Device, Nodes, Index, FMod, Mapf, Times_called) ->
+mapping_phase(Device, Nodes, FMod, Mapf) ->
 
 %{ok, Device} = file:open(".hosts.erlang", [write]),
 % Formats the host name to net_adm standards
 %file:write(Device, io_lib:format("\'~s\'.\n", [X])),
 
-
-	case io:get_line(Device, "") of
-	eof -> file:close(Device), io:format("End of File\n");
-	Line ->
-		Tmp = string:tokens(Line, "\t"),
-		Key = lists:nth(1,Tmp),
-		Value = string:strip(lists:nth(2,Tmp), right, $\n),
-		Pid = spawn( lists:nth(Index, Nodes), FMod, Mapf, [] ),
-		Pid ! { self(), {Key, Value} },
-
-		%Cycle through Nodes to distribute workload
-		case length(Nodes) =:= Index of
-			true -> spawn_mappers(Device, Nodes, 1, FMod, Mapf, Times_called + 1);
-		 	false -> spawn_mappers(Device, Nodes, Index + 1, FMod, Mapf, Times_called + 1)
-		end
-
-	end,
-
-	Aggregator = spawn(self(), aggregate_results),
-
+	spawn_mappers(Device, Nodes, 1, FMod, Mapf, self() ),
+	Aggregator = spawn( module_info(module), aggregate_results, [self(), []] ),
+		io:format("in aggregator~n"),
 	receive
 		{ok, {K, V} } ->
 			Aggregator ! {K, V}
@@ -159,6 +142,29 @@ spawn_mappers(Device, Nodes, Index, FMod, Mapf, Times_called) ->
 	end,
 
 	Res.
+
+
+spawn_mappers(Device, Nodes, Index, FMod, Mapf, Caller) ->
+	case io:get_line(Device, "") of
+
+		%Catch end of file
+		eof -> file:close(Device), io:format("End of File\n");
+
+		%Extract key and values, spawn function on node
+		%and pass it pair + pid of mapping_phase
+		Line ->
+			Tmp = string:tokens(Line, "\t"),
+			Key = lists:nth(1,Tmp),
+			Value = string:strip(lists:nth(2,Tmp), right, $\n),
+			Pid = spawn( lists:nth(Index, Nodes), FMod, Mapf, [] ),
+			Pid ! { Caller, {Key, Value} },
+
+			%Cycle through Nodes to distribute workload
+			case length(Nodes) =:= Index of
+				true -> spawn_mappers(Device, Nodes, 1, FMod, Mapf, Caller);
+				false -> spawn_mappers(Device, Nodes, Index + 1, FMod, Mapf, Caller)
+			end
+	end.
 
 
 aggregate_results(From, L) ->
