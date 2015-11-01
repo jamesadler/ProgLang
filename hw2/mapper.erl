@@ -2,8 +2,11 @@
 -export([map/1,reduce/1]).
 
 mapper_server() ->
-	'mapreduce@127.0.0.1'
+	'central@127.0.0.1'
 .
+
+% mapreduce:start("input.txt", "output.txt", fun mapper:map/1, fun mapper:reduce/1, 4, 2, 2, ['ws1@127.0.0.1']).
+
 
 call_mapreduce(Msg) ->
 	MapReduceServer = mapper_server(),
@@ -26,4 +29,9 @@ map(Data) ->
 reduce({Key,Values}) -> 
 	
 	% {Key,[lists:foldl(fun(V,Sum) -> Sum + V end, 0, Values)]}
+.
+
+merge(Key, Value, List) ->
+
+
 .
