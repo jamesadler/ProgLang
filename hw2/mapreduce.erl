@@ -20,7 +20,7 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 
 	%Read in input file line by line, spawn mapper for each
 	{ok, Device} = file:open(Fin,[read]),
-	spawn_mappers(Device, Nodes, 1, FMod, Mapf, 0),
+	MappedData = spawn_mappers(Device, Nodes, 1, FMod, Mapf, 0),
 
 	%SHUFFLE PHASE
 	io:format("func: Shuffle\n"),
@@ -29,12 +29,12 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 	lists:foreach(
 		fun(X) ->
 			Key = element(1,X),
-			Value = element(2,X),
+			Value = element(2,X)
 
-			mapper:merge(Key, Value,MappedData)
+			%mapper:merge(Key, Value,MappedData)
 
 		end,
-		Data
+		MappedData
 	),
 
 	lists:foreach(
@@ -111,9 +111,9 @@ map_phase(Device, Redf) ->
 			Key = lists:nth(1,Tmp),
 			Value = string:strip(lists:nth(2,Tmp), right, $\n),
 
-			TmpMap = mapper:map({Key,Value}),
+			TmpMap = mapper:map({Key,Value})
 
-			shuffle_phase(TmpMap, MappedData)
+		%	shuffle_phase(TmpMap, MappedData)
 	end,
 
 
@@ -146,23 +146,25 @@ spawn_mappers(Device, Nodes, Index, FMod, Mapf, Times_called) ->
 
 	end,
 
-	Aggregator = spawn(aggregate_results),
+	Aggregator = spawn(self(), aggregate_results),
 
 	receive
 		{ok, {Key, Val} } ->
-			Aggregator ! {Key, Val},
-			flush()
-		after 0 -> ok
+			Aggregator ! {Key, Val}
+		after 0 -> Aggregator ! 'done', ok
 	end,
 
-	'done'
-.
-
-
-aggregate_results(L) ->
 	receive
-		{ From, {Key, Val} } -> aggregate_results( [ {Key, Val} | L ] );
-		_ -> exit("fucked up")
-		after 0 -> From ! {ok, L}
+		{ok, [H|T] } -> Res = { ok, [H|T] }
+	end,
+
+	Res.
+
+
+aggregate_results(From, L) ->
+	receive
+		{ From, {Key, Val} } -> aggregate_results( From, [ {Key, Val} | L ] );
+		'done' -> From ! {ok, L}, ok;
+		_ -> exit("INVALID INPUT")
 	end
 .
