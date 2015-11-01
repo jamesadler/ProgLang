@@ -27,11 +27,11 @@ map(Data) ->
 
 % Reduces the given data
 reduce({Key,Values}) -> 
-	
+	io:format("reduce")
 	% {Key,[lists:foldl(fun(V,Sum) -> Sum + V end, 0, Values)]}
 .
 
 merge(Key, Value, List) ->
-
-
+	io:format("merge")
+	%
 .
