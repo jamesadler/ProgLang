@@ -149,8 +149,8 @@ spawn_mappers(Device, Nodes, Index, FMod, Mapf, Times_called) ->
 	Aggregator = spawn(self(), aggregate_results),
 
 	receive
-		{ok, {Key, Val} } ->
-			Aggregator ! {Key, Val}
+		{ok, {K, V} } ->
+			Aggregator ! {K, V}
 		after 0 -> Aggregator ! 'done', ok
 	end,
 
