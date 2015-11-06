@@ -1,0 +1,15 @@
+module spoon_files;
+
+behavior Spun {
+    private Object contents ;
+    
+    Spun (Object initContents){ contents = initContents; }
+    Object get(){ return contents; }
+    void print(String arg){ 
+        append(arg) @ 
+        standardOutput <- println(token);
+    }
+    void set(Object newContents){ contents = newContents; }
+    
+    String append(String arg){ return arg + " is awesome!\n"; }
+}

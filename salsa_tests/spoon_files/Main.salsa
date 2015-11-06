@@ -1,0 +1,26 @@
+module spoon_files;
+
+
+behavior Main {
+    
+    void act(String[] args) {
+    
+        Spun acr1;
+        Spun acr2;
+    
+    
+        acr1 = new Spun() 
+            at (new UAN("uan://127.0.0.1:3030/acr1"), 
+                new UAL("rmsp://172.17.37.10:4040/acr1"));
+        
+        acr2 = new Spun() 
+            at (new UAN("uan://127.0.0.1:3030/acr2"), 
+                new UAL("rmsp://172.17.37.10:4041/acr2"));
+
+        
+        
+        acr1 <- print("Caroline");
+        acr2 <- print("Spoon");
+    }
+    
+}
