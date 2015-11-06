@@ -1,37 +1,24 @@
 -module(mapper).
--export([map/1,reduce/1]).
-
-mapper_server() ->
-	'central@127.0.0.1'
-.
-
-% mapreduce:start("input.txt", "output.txt", fun mapper:map/1, fun mapper:reduce/1, 4, 2, 2, ['ws1@127.0.0.1']).
-
-
-call_mapreduce(Msg) ->
-	MapReduceServer = mapper_server(),
-	monitor_node(MapReduceServer, true)
-	% io:format("~s", Msg)
-.
+-export([map/0, reduce/1, merge/0]).
 
 % Maps the given data
-% map({Key,Value}) -> 
-map(Data) -> 
-	lists:map(
-  		fun(X) -> 
-  			{X,1}
-  		end,
-  		Data
-  	)
-.
+% map() ->
+map() ->
+	receive
+		{Caller, {Key, Value}} ->
+			Caller ! {ok, lists:map( fun(X) -> {X,1} end, Value)};
+		_->
+			exit("ERROR: INVALID INPUT IN MAPPING FUNCTION~n")
+end.
 
 % Reduces the given data
-reduce({Key,Values}) -> 
+reduce({Key,Values}) ->
 	io:format("reduce")
 	% {Key,[lists:foldl(fun(V,Sum) -> Sum + V end, 0, Values)]}
 .
 
-merge(Key, Value, List) ->
-	io:format("merge")
-	%
-.
+merge() ->
+	receive
+		_->
+			io:format("merge~n")
+	end.

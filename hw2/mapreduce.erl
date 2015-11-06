@@ -1,5 +1,5 @@
 -module(mapreduce).
--export([start/9,map_phase/2,reduce_phase/2]).
+-export([start/9,map_phase/2,reduce_phase/2, aggregate_results/1]).
 
 % start("input_file.txt","output_file.txt",fun dna_char_count:map/1,
 % 		fun dna_char_count:reduce/1,4,2,2,
@@ -124,27 +124,29 @@ map_phase(Device, Redf) ->
 % Generate mappers from input file, distributing among nodes
 mapping_phase(Device, Nodes, FMod, Mapf) ->
 
-%{ok, Device} = file:open(".hosts.erlang", [write]),
-% Formats the host name to net_adm standards
-%file:write(Device, io_lib:format("\'~s\'.\n", [X])),
+	%Create mapping functions on nodes w/ spawn_mappers,
+	%Send results of spawn_mappers to Aggregator
+	%Illustration of data transformation:
+	%---> [{k, v}, {k, v}...] ===> [ {K1, [v1]}, {K2, [v1, v2, v3...]} ... ]
 
-	spawn_mappers(Device, Nodes, 1, FMod, Mapf, self() ),
-	Aggregator = spawn( module_info(module), aggregate_results, [self(), []] ),
-		io:format("in aggregator~n"),
+
+	Aggregator = spawn( module_info(module), aggregate_results, [[]] ),
+	Times_called = spawn_mappers(Device, Nodes, 1, FMod, Mapf, self(), 0 ),
+	io:format("in aggregator~n"),
+
+	map_receive(Aggregator, Times_called),
+
+	%Aggregator responds, sends list of tuples
 	receive
-		{ok, {K, V} } ->
-			Aggregator ! {K, V}
-		after 0 -> Aggregator ! 'done', ok
-	end,
-
-	receive
-		{ok, [H|T] } -> Res = { ok, [H|T] }
-	end,
-
-	Res.
+		{ok, Res} ->
+			lists:foreach(fun(X) -> io:format("~s~n", [lists:nth(1,X)]) end, Res),
+			io:format("Done~n"),
+		  { ok, Res }
+		after 0 -> ok
+	end.
 
 
-spawn_mappers(Device, Nodes, Index, FMod, Mapf, Caller) ->
+spawn_mappers(Device, Nodes, Index, FMod, Mapf, Caller, Times_called) ->
 	case io:get_line(Device, "") of
 
 		%Catch end of file
@@ -159,18 +161,50 @@ spawn_mappers(Device, Nodes, Index, FMod, Mapf, Caller) ->
 			Pid = spawn( lists:nth(Index, Nodes), FMod, Mapf, [] ),
 			Pid ! { Caller, {Key, Value} },
 
+
 			%Cycle through Nodes to distribute workload
 			case length(Nodes) =:= Index of
-				true -> spawn_mappers(Device, Nodes, 1, FMod, Mapf, Caller);
-				false -> spawn_mappers(Device, Nodes, Index + 1, FMod, Mapf, Caller)
+				true -> spawn_mappers(Device, Nodes, 1, FMod, Mapf, Caller, Times_called + 1);
+				false -> spawn_mappers(Device, Nodes, Index + 1, FMod, Mapf, Caller, Times_called + 1)
 			end
-	end.
+	end,
+	Times_called + 1.
 
-
-aggregate_results(From, L) ->
+%Calls aggregate_helper in case of valid input;
+%Pulls key-value pairs from L, returns a list of keys
+aggregate_results(Record) ->
 	receive
-		{ From, {Key, Val} } -> aggregate_results( From, [ {Key, Val} | L ] );
-		'done' -> From ! {ok, L}, ok;
+		{Caller, [H | T] } ->
+				aggregate_results( aggregate_helper( [H | T], Record ) );
+		{Caller, 'done'} -> Caller ! {ok, Record};
 		_ -> exit("INVALID INPUT")
 	end
 .
+
+%Programmatically equivalent to shuffle phase
+aggregate_helper(L, Res) ->
+
+	case L of
+
+		%Find tuple in results;
+		%If present, adjust value list;
+		%Otherwise insert new tuple
+		[ {K, V} | T ] ->
+				aggregate_helper(T, lists:keystore(K, 1, Res, {K, [L | V] }));
+		[] -> Res;
+		_ -> exit("ERROR: INVALID INPUT LIST~n")
+	end.
+
+map_receive(Aggregator, Times_called) ->
+	receive
+		{ok, L} ->
+			io:format("Cool~n"),
+			lists:foreach( fun(x) -> io:format("~s~n", [lists:nth(1, x)]) end, L),
+			Aggregator ! {self(), L},
+			case Times_called of
+				0 -> ok;
+				_-> map_receive(Aggregator, Times_called - 1)
+			end;
+
+		_-> exit("ERROR: UNEXPECTED INPUT~n")
+	end.
