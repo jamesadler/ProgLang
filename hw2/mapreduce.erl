@@ -20,22 +20,23 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 
 	%Read in input file line by line, spawn mapper for each
 	{ok, Device} = file:open(Fin,[read]),
+
 	MappedData = mapping_phase(Device, Nodes, FMod, Mapf),
 
 	%SHUFFLE PHASE
 	io:format("func: Shuffle\n"),
 
-	Tmp = [],
-	lists:foreach(
-		fun(X) ->
-			Key = element(1,X),
-			Value = element(2,X)
+	% Tmp = [],
+	% lists:foreach(
+	% 	fun(X) ->
+	% 		Key = element(1,X),
+	% 		Value = element(2,X)
 
-			%mapper:merge(Key, Value,MappedData)
+	% 		%mapper:merge(Key, Value,MappedData)
 
-		end,
-		MappedData
-	),
+	% 	end,
+	% 	MappedData
+	% ),
 
 %	lists:foreach(
 %		fun(X) ->
@@ -74,27 +75,6 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
   	io:format("End of Cool Beans!~n")
 .
 
-read_line(Device, Lines) ->
-	case io:get_line(Device, "") of
-		eof ->
-			file:close(Device),
-			io:format("End of File\n");
-		Line ->
-			Tmp = string:tokens(Line, "\t"),
-			Key = lists:nth(1,Tmp),
-			Value = string:strip(lists:nth(2,Tmp), right, $\n),
-			% put(Lines, [[Value] | Lines]),
-			% [[Value] | Lines],
-			% io:format("~w\n",[Value])
-			% [Value],
-			% TmpMap = mapper:map({Key,Value}),
-
-			% shuffle_phase(TmpMap, MappedData)
-			% % map_phase(Device, Mapf, Redf)
-			read_line(Device, [[Value] | Lines])
-	end
-.
-
 reduce_phase(Redf, Account) ->
 	io:format("adf")
 .
@@ -129,6 +109,7 @@ mapping_phase(Device, Nodes, FMod, Mapf) ->
 	%Illustration of data transformation:
 	%---> [{k, v}, {k, v}...] ===> [ {K1, [v1]}, {K2, [v1, v2, v3...]} ... ]
 
+<<<<<<< HEAD
 
 	Aggregator = spawn( module_info(module), aggregate_results, [[]] ),
 	Times_called = spawn_mappers(Device, Nodes, 1, FMod, Mapf, self(), 0 ),
@@ -144,6 +125,23 @@ mapping_phase(Device, Nodes, FMod, Mapf) ->
 		  { ok, Res }
 		after 0 -> ok
 	end.
+=======
+	spawn_mappers(Device, Nodes, 1, FMod, Mapf, self() )
+	% Aggregator = spawn( module_info(module), aggregate_results, [self(), []] ),
+	% io:format("in aggregator~n")
+	% receive
+	% 	{ok, {K, V} } ->
+	% 		Aggregator ! {K, V}
+	% 	after 0 -> Aggregator ! 'done', ok
+	% end,
+
+	% receive
+	% 	{ok, [H|T] } -> Res = { ok, [H|T] }
+	% end,
+
+	% Res
+.
+>>>>>>> 22d4ea2f6277c257d533a62cdcb0a896af6ff2ac
 
 
 spawn_mappers(Device, Nodes, Index, FMod, Mapf, Caller, Times_called) ->
@@ -158,8 +156,15 @@ spawn_mappers(Device, Nodes, Index, FMod, Mapf, Caller, Times_called) ->
 			Tmp = string:tokens(Line, "\t"),
 			Key = lists:nth(1,Tmp),
 			Value = string:strip(lists:nth(2,Tmp), right, $\n),
+			% io:format("~s\n",[lists:nth(Index, Nodes)]),
+			% io:format("~s ~s\n",[Key, Value]),
 			Pid = spawn( lists:nth(Index, Nodes), FMod, Mapf, [] ),
-			Pid ! { Caller, {Key, Value} },
+			% Pid = spawn(lists:nth(Index, Nodes), mapper, fuck, []),
+			% register(workstation, spawn('ws1@127.0.0.1', mapper, fuck, [])),
+			% spawn('ws1@127.0.0.1', mapper, fuck, [3]),
+			% Pid ! { Caller, {Key, Value} },
+
+
 
 
 			%Cycle through Nodes to distribute workload
