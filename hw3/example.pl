@@ -25,23 +25,41 @@ vp(X):- X = verb(V), verb(V).
 nom(X):- X = noun(N), noun(N).
 s(X, Y):- X = np(D, N), Y = vp(V), np(D, N), vp(V).
 
-%Important for queries
+%VERB MAPPINGS
 maps(verb(left), pres_verb(leave)).
 maps(verb(arrived), pres_verb(arrive)).
 maps(verb(stayed), pres_verb(stay)).
 maps(verb(flew), pres_verb(fly)).
 
+%QUANTIFIERS
+quantifier(a).
+quantifier(every).
+
+%ASSERTION PREDICATE
+%assertion(nom(noun(N)), atom(Name), verb(V)).
+
 %CONTRAPOSITIVE ASSERTIONS
 parse(['the', W1, Name, 'did', 'not', W2, '.']):-
   A = nom(noun(W1)), A,
   B = pres_verb(W2), B,
-  assert(assertion(A, Name, not(B))).
+  assert(assertion(A, Name, not(B))), !.
 
 %POSITIVE ASSERTIONS
 parse(['the', W1, Name, W2, '.']):-
   A = nom(noun(W1)), A,
   B = verb(W2), B,
-  assert(assertion(A, Name, B)).
+  assert(assertion(A, Name, B)), !.
 
 %QUERIES
-%parse(['did', W2, W3, W4, '?']):-.
+parse(['did', W2, W3, W4, '?']):-
+  quantifier(W2),
+  nom(noun(W3)),
+  pres_verb(W4),
+  query(W2, W3, W4),
+  write(yes), nl.
+
+query('a', N, PV):-
+  maps(V, pres_verb(PV)),
+  clause(assertion, (nom(noun(N)), _, V)).
+
+%query('every', N, V):-.
