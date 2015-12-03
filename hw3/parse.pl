@@ -27,7 +27,7 @@ parse([W1, W2, W3, '.']):-
   X = det(W1), X,
   Y = nom(noun(W2)), Y,
   Z = verb(W3), Z,
-  NP = np(X, Y), VP = vp(Z), write(s(NP, VP)).
+  NP = np(X, Y), VP = vp(Z), writeln(s(NP, VP)).
 
 loop :-
   read_line(L),
