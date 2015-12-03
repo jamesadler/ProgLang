@@ -67,17 +67,14 @@ query('a', N, PV):-
 query('every', N, PV):-
   maps(V, pres_verb(PV)),
 
-  /*cannot be predicate saying person did not 'verb',*/
+  /*cannot be predicate saying a noun N did not 'verb',*/
   not(predicate_property(assertion(nom(noun(N)), _, not(V)), visible)),
 
   /*Also cannot be the case...*/
   not(
       (
-        /*that for a list L containing all the names of all nouns of type N...*/
-        findall(X, predicate_property(assertion(nom(noun(N)), X, _), visible), L),
-
-              /*there exists an element with name Var that has not done verb V*/
-              member(Var, L),
-              not(predicate_property(assertion(nom(noun(N)), Var, V), visible))
+        /*that there exists a noun N with name Var that has not done verb V*/
+        current_predicate(assertion(nom(noun(N)), Var, _)),
+        not(current_predicate(assertion(nom(noun(N)), Var, V)))
       )
-  ), !.
+  ).
