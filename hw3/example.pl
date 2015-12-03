@@ -76,7 +76,7 @@ query('every', N, PV):-
   not(
       (
         /*that there exists a noun N with name Var that has not done verb V*/
-        /*predicate_property(assertion(nom(noun(N)), Var, _), visible),*/
+        predicate_property(assertion(nom(noun(N)), Var, _), visible),
         not(predicate_property(assertion(nom(noun(N)), Var, V), visible))
       )
   ), !.
