@@ -55,12 +55,17 @@ parse(['did', W2, W3, W4, '?']):-
   quantifier(W2),
   nom(noun(W3)),
   pres_verb(W4),
-  query(W2, W3, W4),
-  write(yes), nl.
+  (query(W2, W3, W4)->
+    write(yes);
+    write(no)
+  ).
+  %% write(yes), nl.
 
 query('a', N, PV):-
   maps(V, pres_verb(PV)),
-  predicate_property(assertion(nom(noun(N)), _, V), visible), !.
+  predicate_property(assertion(nom(noun(N)), _, V), visible), 
+  !
+.
 
 query('every', N, PV):-
   maps(V, pres_verb(PV)),
