@@ -59,13 +59,10 @@ parse(['did', W2, W3, W4, '?']):-
     write(yes);
     write(no)
   ).
-  %% write(yes), nl.
 
 query('a', N, PV):-
   maps(V, pres_verb(PV)),
-  predicate_property(assertion(nom(noun(N)), _, V), visible), 
-  !
-.
+  predicate_property(assertion(nom(noun(N)), _, V), visible), !.
 
 query('every', N, PV):-
   maps(V, pres_verb(PV)),
@@ -81,6 +78,6 @@ query('every', N, PV):-
 
               /*there exists an element with name Var that has not done verb V*/
               member(Var, L),
-              not(predicate_property(assertion(nom(noun(N)), Var, V)))
+              not(predicate_property(assertion(nom(noun(N)), Var, V), visible))
       )
-  ).
+  ), !.
