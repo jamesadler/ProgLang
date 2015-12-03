@@ -23,6 +23,8 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 
 	MappedData = mapping_phase(Device, Nodes, FMod, Mapf),
 
+	% io:format("~w",[MappedData]),
+
 	%SHUFFLE PHASE
 	io:format("func: Shuffle\n"),
 
@@ -38,15 +40,15 @@ start(Fin, Fout, FMod, Mapf, Redf, Num_m, Num_s, Num_r, Nodes) ->
 	% 	MappedData
 	% ),
 
-%	lists:foreach(
-%		fun(X) ->
-%			Key = element(1,X),
-%			Value = element(2,X),
-%
-%			io:format("~c ~w\n",[Key, Value])
-%		end,
-%		MappedData
-%	),
+	% lists:foreach(
+	% 	fun(X) ->
+	% 		Key = element(1,X),
+	% 		Value = element(2,X),
+
+	% 		io:format("~c ~w\n",[Key, Value])
+	% 	end,
+	% 	MappedData
+	% ),
 
 
 	io:format("func: end Shuffle\n"),
@@ -158,13 +160,8 @@ spawn_mappers(Device, Nodes, Index, FMod, Mapf, Caller, Times_called) ->
 			Value = string:strip(lists:nth(2,Tmp), right, $\n),
 			% io:format("~s\n",[lists:nth(Index, Nodes)]),
 			% io:format("~s ~s\n",[Key, Value]),
-			Pid = spawn( lists:nth(Index, Nodes), FMod, Mapf, [] ),
-			% Pid = spawn(lists:nth(Index, Nodes), mapper, fuck, []),
-			% register(workstation, spawn('ws1@127.0.0.1', mapper, fuck, [])),
-			% spawn('ws1@127.0.0.1', mapper, fuck, [3]),
-			% Pid ! { Caller, {Key, Value} },
-
-
+			Pid = spawn(lists:nth(Index, Nodes), FMod, Mapf, [{Key,Value}] ),
+			Pid ! { Caller, {Key, Value} },
 
 
 			%Cycle through Nodes to distribute workload
