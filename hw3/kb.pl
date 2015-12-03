@@ -23,13 +23,17 @@ s(X, Y):- X = np(D, N), Y = vp(V), np(D, N), vp(V).
 print_list([]).
 print_list([H|T]):- nl, write(H), print_list(T).
 
-parse([W1, W2, W3, '.']):- NP = np(W1, W2), VP = vp(W3), s(NP, VP).
+parse([W1, W2, W3, '.']):-
+  X = det(W1), X,
+  Y = noun(W2), Y,
+  Z = verb(W3), Z,
+  NP = np(X, Y), VP = vp(Z), write(s(NP, VP)).
 
 loop :-
   read_line(L),
   (L \= ['.'], L \= ['!']),
   print_list(L),
-  /*parse(L),*/
+  parse(L),
   loop.
 
 
