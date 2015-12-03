@@ -16,5 +16,6 @@ verb(stayed).
 
 
 np(X, Y):- X = det(D), Y = noun(N), det(D), noun(N).
-vp(verb(X)).
-nom(noun(X)).
+vp(X):- X = verb(V), verb(V).
+nom(X):- X = noun(N), noun(N).
+s(X, Y):- X = np(D, N), Y = vp(V), np(D, N), vp(V).
