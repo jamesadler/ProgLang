@@ -32,16 +32,16 @@ maps(verb(stayed), pres_verb(stay)).
 maps(verb(flew), pres_verb(fly)).
 
 %CONTRAPOSITIVE ASSERTIONS
-parse(['the', W1, _, 'did', 'not', W2, '.']):-
+parse(['the', W1, Name, 'did', 'not', W2, '.']):-
   A = nom(noun(W1)), A,
-  B = verb(W2), B,
-  assert(assertion(not(B), A)).
+  B = pres_verb(W2), B,
+  assert(assertion(A, Name, not(B))).
 
 %POSITIVE ASSERTIONS
-parse(['the', W1, _, W2, '.']):-
+parse(['the', W1, Name, W2, '.']):-
   A = nom(noun(W1)), A,
   B = verb(W2), B,
-  write(assert(assertion(B, A))).
+  assert(assertion(A, Name, B)).
 
 %QUERIES
 %parse(['did', W2, W3, W4, '?']):-.
