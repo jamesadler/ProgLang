@@ -69,14 +69,14 @@ query('every', N, PV):-
 
   /*cannot be predicate saying a noun N did not 'PV',*/
   write(before),
-  not(predicate_property(assertion(nom(noun(N)), _, not(pres_verb(PV))), visible)),
+  /*not(predicate_property(assertion(nom(noun(N)), _, not(pres_verb(PV))), visible)),*/
   write(case1),
 
   /*Also cannot be the case...*/
   not(
       (
         /*that there exists a noun N with name Var that has not done verb V*/
-        predicate_property(assertion(nom(noun(N)), Var, _), visible),
+        /*predicate_property(assertion(nom(noun(N)), Var, _), visible),*/
         not(predicate_property(assertion(nom(noun(N)), Var, V), visible))
       )
   ), !.
