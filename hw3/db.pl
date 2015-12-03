@@ -4,6 +4,9 @@ det(the).
 det(a).
 det(every).
 
+det(did).
+det(not).
+
 noun(train).
 noun(bike).
 noun(flight).
@@ -14,24 +17,42 @@ verb(left).
 verb(arrived).
 verb(stayed).
 
+pres_verb(leave).
+pres_verb(fly).
+pres_verb(arrive).
+pres_verb(stay).
+
 
 np(X, Y):- X = det(D), Y = noun(N), det(D), noun(N).
 vp(X):- X = verb(V), verb(V).
 nom(X):- X = noun(N), noun(N).
 s(X, Y):- X = np(D, N), Y = vp(V), np(D, N), vp(V).
 
+cmd(X):- X = det(D), D.
+
 print_list([]).
 print_list([H|T]):- nl, write(H), print_list(T).
 
-parse([W1, W2, W3, '.']):-
-  X = det(W1), X,
-  Y = nom(noun(W2)), Y,
-  Z = verb(W3), Z,
-  NP = np(X, Y), VP = vp(Z), writeln(s(NP, VP)).
+parse([W1, W2, W3, W4, '.']):-
+  A = det(W1), A,
+  B = nom(noun(W2)), B,
+  assert(word(W3)),
+  D = verb(W4), D,
+  listing(word)
+.
+
+%% parse([W1, W2, W3, W4, W5, W6, '.']):-
+%% X = det(W1), X,
+%% Y = nom(noun(W2)), Y,
+%% Z = verb(W3), Z,
+%% NP = np(X, Y), VP = vp(Z), writeln(s(NP, VP))
+%% writeln(X)
+%% .
 
 loop :-
   read_line(L),
   (L \= ['.'], L \= ['!']),
+  %% writeln(L),
   /*print_list(L),*/
   parse(L),
   loop.
