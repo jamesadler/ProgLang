@@ -60,6 +60,6 @@ parse(['did', W2, W3, W4, '?']):-
 
 query('a', N, PV):-
   maps(V, pres_verb(PV)),
-  clause(assertion, (nom(noun(N)), _, V)).
+  predicate_property(assertion(nom(noun(N)), _, V), visible), !.
 
 %query('every', N, V):-.
